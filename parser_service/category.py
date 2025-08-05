@@ -45,6 +45,12 @@ def delete_category(category_id):
         """, (category_id,))
         connection.commit()
 
+def get_category_id_by_slug(slug):
+    with connection.cursor() as cur:
+        cur.execute("SELECT id FROM categories WHERE slug = %s", (slug,))
+        result = cur.fetchone()
+        return result[0] if result else None
+
     
 # new_id = insert_category(conn, "Electronics", "electronics", "https://example.com/electronics")
 # print(f"Inserted category with id {new_id}")

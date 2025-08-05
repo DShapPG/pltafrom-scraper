@@ -1,7 +1,8 @@
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 from settings import EXCLUDED_CATEGORIES, BASE_URL, HEADERS
-from main import insert_or_update_category, delete_category
+from category import insert_or_update_category, delete_category, get_category_id_by_slug
+
 
 
 def parse_base_category(base_url, headers):
@@ -21,8 +22,35 @@ def parse_base_category(base_url, headers):
         category_url = base_url + path
         # print(f"Title:{title_text} Path: {slug} URL: {category_url}")
         if title and slug and category_url and path and title not in EXCLUDED_CATEGORIES:
-            print(f"Title:{type(title)} Path: {type(slug)} URL: {type(category_url)} PATH: {type(path)}")
+            # print(f"Title:{type(title)} Path: {type(slug)} URL: {type(category_url)} PATH: {type(path)}")
             insert_or_update_category(title, slug, category_url, path)
+            parent_id = get_category_id_by_slug(slug)
+            parse_subcategory(path, parent_id)
+
+
+
+def parse_subcategory(parent_path, parent_id):
+    response = requests.get(BASE_URL + parent_path, headers=HEADERS)
+    soup = BeautifulSoup(response.text, 'lxml')
+    links_container = soup.find("ul", attrs = {"data-testid":"category-count-links"})
+    if links_container:
+        cards = links_container.find_all('li')
+        print(len(cards))
+        for card in cards:
+            tag = card.find('a')
+            if tag:
+                title = ''.join(t for t in tag.children if isinstance(t, NavigableString)).strip()
+            else:
+                title = None
+            path = tag.get('href')
+            slug = path.strip('/').split('/')[-1]
+            if path:
+                category_url = BASE_URL + path
+                print(f"Title:{title} Slug: {slug} URL: {category_url} PATH: {path} Parent_id: {parent_id}")
+
+                insert_or_update_category(title, slug, category_url, path, parent_id=parent_id)
+
+
             
 
 parse_base_category(BASE_URL, HEADERS)
