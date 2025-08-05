@@ -20,7 +20,7 @@ def init_db():
                     title TEXT,
                     created_at TIMESTAMP DEFAULT NOW(),
                     updated_at TIMESTAMP DEFAULT NOW(),
-                    category_id INT NULL,
+                    category_id INT NULL REFERENCES categories(id) ON DELETE SET NULL,
                     url TEXT UNIQUE,
                     price TEXT,
                     description TEXT,
@@ -29,7 +29,7 @@ def init_db():
                     state_id INT NULL,
                     views INT NULL,
                     photo_urls JSONB,
-                    parameters TEXT[]
+                    parameters JSONB
                     
                 );
             """)
@@ -45,3 +45,4 @@ def get_connection():
     )
 
 connection = get_connection()
+init_db()

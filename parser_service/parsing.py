@@ -50,7 +50,20 @@ def parse_subcategory(parent_path, parent_id):
 
                 insert_or_update_category(title, slug, category_url, path, parent_id=parent_id)
 
+def parse_listings(category_url):
+    response = requests.get(category_url, headers=HEADERS)
+    soup = BeautifulSoup(response.text, 'lxml')
+    listing_grid = soup.find("div", attrs = {"data-testid":"listing-grid"})
+    cards = listing_grid.find_all('div', attrs = {"data-testid":"l-card"})
+    print(len(cards))
+    for card in cards:
+        tag = card.find('div', attrs = {"data-cy":"ad-card-title"})
+        if tag:
+            title = tag.find('h4').text.strip()
+            path = tag.find('a').get('href')
+            print(title)
+
 
             
-
-parse_base_category(BASE_URL, HEADERS)
+parse_listings("https://www.olx.ua/uk/transport/legkovye-avtomobili/")
+# parse_base_category(BASE_URL, HEADERS)
