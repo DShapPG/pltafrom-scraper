@@ -1,7 +1,9 @@
 import requests
+import time
 from bs4 import BeautifulSoup, NavigableString
 from settings import EXCLUDED_CATEGORIES, BASE_URL, HEADERS
-from category import insert_or_update_category, delete_category, get_category_id_by_slug
+from category import insert_or_update_category, delete_category, get_category_id_by_slug, get_category_id_by_url
+
 
 
 
@@ -23,9 +25,11 @@ def parse_base_category(base_url, headers):
         # print(f"Title:{title_text} Path: {slug} URL: {category_url}")
         if title and slug and category_url and path and title not in EXCLUDED_CATEGORIES:
             # print(f"Title:{type(title)} Path: {type(slug)} URL: {type(category_url)} PATH: {type(path)}")
+            print(title)
             insert_or_update_category(title, slug, category_url, path)
             parent_id = get_category_id_by_slug(slug)
             parse_subcategory(path, parent_id)
+        time.sleep(1) #sleep 1 second to not get ban from olx
 
 
 
@@ -50,20 +54,5 @@ def parse_subcategory(parent_path, parent_id):
 
                 insert_or_update_category(title, slug, category_url, path, parent_id=parent_id)
 
-def parse_listings(category_url):
-    response = requests.get(category_url, headers=HEADERS)
-    soup = BeautifulSoup(response.text, 'lxml')
-    listing_grid = soup.find("div", attrs = {"data-testid":"listing-grid"})
-    cards = listing_grid.find_all('div', attrs = {"data-testid":"l-card"})
-    print(len(cards))
-    for card in cards:
-        tag = card.find('div', attrs = {"data-cy":"ad-card-title"})
-        if tag:
-            title = tag.find('h4').text.strip()
-            path = tag.find('a').get('href')
-            print(title)
 
-
-            
-parse_listings("https://www.olx.ua/uk/transport/legkovye-avtomobili/")
-# parse_base_category(BASE_URL, HEADERS)
+parse_base_category(BASE_URL, HEADERS)

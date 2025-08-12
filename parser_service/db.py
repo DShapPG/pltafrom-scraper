@@ -1,4 +1,5 @@
-from psycopg2 import connect
+from connection_pool import get_connection
+
 def init_db():
     with get_connection() as connection:
         with connection.cursor() as cursor:
@@ -6,14 +7,15 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS categories (
                     id SERIAL PRIMARY KEY,
                     title TEXT,
-                    slug TEXT UNIQUE,
+                    slug TEXT,
                     created_at TIMESTAMP DEFAULT NOW(),
                     updated_at TIMESTAMP DEFAULT NOW(),
                     parent_id INT NULL,
                     path TEXT,
-                    url TEXT UNIQUE                    
+                    url TEXT UNIQUE
                 );
             """)
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS listings (
                     id SERIAL PRIMARY KEY,
@@ -26,23 +28,62 @@ def init_db():
                     description TEXT,
                     district_id INT NULL,
                     city_id INT NULL,
-                    state_id INT NULL,
+                    region_id INT NULL,
                     views INT NULL,
-                    photo_urls JSONB,
+                    photo_urls TEXT[],
                     parameters JSONB
-                    
+
                 );
             """)
 
+            cursor.execute("""
+               CREATE TABLE IF NOT EXISTS regions(
+                   id SERIAL PRIMARY KEY,
+                   name TEXT,
+                   created_at TIMESTAMP DEFAULT NOW(),
+                   updated_at TIMESTAMP DEFAULT NOW(),
+                   url TEXT UNIQUE,
+                   slug TEXT,
+                   path TEXT,
+                   olx_id INT NULL UNIQUE
+                   );
+               """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cities (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW(),
+                    url TEXT UNIQUE,
+                    slug TEXT,
+                    path TEXT,
+                    region_id INT NULL REFERENCES regions(id) ON DELETE SET NULL,
+                    olx_id INT NULL UNIQUE
+                );
+            """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS districts (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW(),
+                    url TEXT UNIQUE,
+                    slug TEXT,
+                    path TEXT,
+                    city_id INT NULL REFERENCES cities(id) ON DELETE SET NULL,
+                    olx_id INT NULL UNIQUE
+                );
+            """)
+
+
+
+
+
+
         connection.commit()
 
-def get_connection():
-    return connect(
-        host="ep-tiny-shadow-a2wj1iaj-pooler.eu-central-1.aws.neon.tech",
-        dbname="neondb",
-        user="neondb_owner",
-        password="npg_1lH4OUBpZdck"
-    )
 
-connection = get_connection()
-init_db()
+
+# init_db()
